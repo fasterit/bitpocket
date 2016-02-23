@@ -1,12 +1,14 @@
 # bitpocket
 
-Originally cloned from git://github.com/sickill/bitpocket.git
+Originally cloned from git://github.com/sickill/bitpocket.git    
+Hosted at https://git.faster-it.com/bitpocket    
+Mirrored at https://github.com/fasterit/bitpocket    
 
 
 ## About
 
 This is a fork of @sickill/bitpocket we used internally since 2014.
-While there are quicks (e.g. bitpocket does not backup files it deletes from the server)
+While there are quirks (e.g. bitpocket does not backup files it deletes from the server)
 we have found this tool to be very useful for controlled multi-device syncing for
 tech-savy users.
 
