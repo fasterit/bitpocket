@@ -1,11 +1,13 @@
 #!/bin/bash
+# Mac version 2. Sic.
 
-LANG=$(locale | grep LANG= | sed 's:LANG=::')
+LANG=$(locale | grep LANG= | gsed 's:LANG=::')
 if [ -z "$LANG" ]; then
     LANG="C"
 fi
 
-export LC_ALL=$LANG # for stable "sort" output
+#export LC_ALL=$LANG # for stable "sort" output
+export LC_ALL="C"
 
 # Paths
 DOT_DIR=.bitpocket
@@ -23,7 +25,7 @@ RSYNC_RSH="ssh"
 [ -f "$CFG_FILE" ] && . "$CFG_FILE"
 
 # Test for GNU versions of core utils. Bail if non-GNU.
-sed --version >/dev/null 2>/dev/null
+gsed --version >/dev/null 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "fatal: It seems like you are running non-GNU versions of coreutils."
     echo "       It is currently unsafe to use bitpocket with this setup,"
@@ -75,9 +77,9 @@ function init {
     exit 128
   fi
 
-  mkdir "$DOT_DIR"
+  gmkdir "$DOT_DIR"
 
-  cat <<EOF > "$CFG_FILE"
+  gcat <<EOF > "$CFG_FILE"
 ## Host and path of central storage
 REMOTE_HOST=$1
 REMOTE_PATH="$2"
@@ -97,7 +99,7 @@ REMOTE_PATH="$2"
 # SLOW_SYNC_STOP_CMD="notify-send 'BitPocket sync finished'"
 EOF
 
-  echo "Initialized bitpocket directory at `pwd`"
+  echo "Initialized bitpocket directory at `gpwd`"
   echo "Please have a look at the config file ($DOT_DIR/config)"
 }
 
@@ -128,33 +130,33 @@ function sync {
   on_slow_sync_start
 
   # Check what has changed
-  touch "$STATE_DIR/tree-prev"
-  touch "$STATE_DIR/added-prev"
+  gtouch "$STATE_DIR/tree-prev"
+  gtouch "$STATE_DIR/added-prev"
 
   # Save before-sync state
   # Must be done with rsync itself (rather than find) to respect includes/excludes
   # Order of includes/excludes/filters is EXTREMELY important
   echo "# Saving current state and backing up files (if needed)"
-  echo "  | Root dir: $(pwd)"
-  rsync -av --list-only --exclude "/$DOT_DIR" $RSYNC_OPTS $USER_RULES . | grep "^-\|^d" \
-      | sed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | sed "s:^/\.::" | sort > "$STATE_DIR/tree-current"
+  echo "  | Root dir: $(gpwd)"
+  /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR" $RSYNC_OPTS $USER_RULES . | grep "^-\|^d" \
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort > "$STATE_DIR/tree-current"
 
   # Prevent bringing back locally deleted files or removing new local files
-  cp -f "$STATE_DIR/added-prev" "$TMP_DIR/fetch-exclude"
-  sort "$STATE_DIR/tree-prev" "$STATE_DIR/tree-current" | uniq -u >> "$TMP_DIR/fetch-exclude"
+  gcp -f "$STATE_DIR/added-prev" "$TMP_DIR/fetch-exclude"
+  gsort "$STATE_DIR/tree-prev" "$STATE_DIR/tree-current" | guniq -u >> "$TMP_DIR/fetch-exclude"
 
   # It is difficult to only create the backup directory if needed; instead
   # we always create it, but remove it if it is empty afterwards.
-  mkdir --parents $DOT_DIR/backups/$TIMESTAMP
+  gmkdir --parents $DOT_DIR/backups/$TIMESTAMP
 
   # Determine what will be fetched from server and make backup
   # copies of any local files to be deleted or overwritten.
   # Order of includes/excludes/filters is EXTREMELY important
-  rsync --dry-run \
+  /usr/local/bin/rsync --dry-run \
         -auvzxi --delete $RSYNC_OPTS --exclude "/$DOT_DIR" --exclude-from "$TMP_DIR/fetch-exclude" $USER_RULES "$REMOTE/" . \
-      | grep "^[ch<>\.\*][f]\|\*deleting" | sed "s:^\S*\s*::" | sed 's:\d96:\\\`:g' | sed "s:\(.*\):if [ -f \"\1\" ]; then cp --parents \"\1\" $DOT_DIR/backups/$TIMESTAMP; fi:" | sh || die "BACKUP"
-  [ "$(ls -A $DOT_DIR/backups/$TIMESTAMP)" ] && echo "  | Some files were backed up to $DOT_DIR/backups/$TIMESTAMP"
-  [ "$(ls -A $DOT_DIR/backups/$TIMESTAMP)" ] || rmdir $DOT_DIR/backups/$TIMESTAMP
+      | grep "^[ch<>\.\*][f]\|\*deleting" | gsed "s:^\S*\s*::" | gsed 's:\d96:\\\`:g' | gsed "s:\(.*\):if [ -f \"\1\" ]; then gcp --parents \"\1\" $DOT_DIR/backups/$TIMESTAMP; fi:" | sh || die "BACKUP"
+  [ "$(gls -A $DOT_DIR/backups/$TIMESTAMP)" ] && echo "  | Some files were backed up to $DOT_DIR/backups/$TIMESTAMP"
+  [ "$(gls -A $DOT_DIR/backups/$TIMESTAMP)" ] || grmdir $DOT_DIR/backups/$TIMESTAMP
 
   if [ "$1" != "onlypush" ]
   then
@@ -164,7 +166,7 @@ function sync {
     # Order of includes/excludes/filters is EXTREMELY important
     echo
     echo "# Pulling changes from server"
-    rsync -auvzxi --delete $RSYNC_OPTS --exclude "/$DOT_DIR" --exclude-from "$TMP_DIR/fetch-exclude" $USER_RULES "$REMOTE/" . | sed "s/^/  | /"  || die "PULL"
+    /usr/local/bin/rsync -auvzxi --delete $RSYNC_OPTS --exclude "/$DOT_DIR" --exclude-from "$TMP_DIR/fetch-exclude" $USER_RULES "$REMOTE/" . | gsed "s/^/  | /"  || die "PULL"
 
   fi
 
@@ -176,7 +178,7 @@ function sync {
     # Order of includes/excludes/filters is EXTREMELY important
     echo
     echo "# Pushing changes to server"
-    rsync -auvzxi --delete $RSYNC_OPTS --exclude "/$DOT_DIR" $USER_RULES . "$REMOTE/" | sed "s/^/  | /" || die "PUSH"
+    /usr/local/bin/rsync -auvzxi --delete $RSYNC_OPTS --exclude "/$DOT_DIR" $USER_RULES . "$REMOTE/" | gsed "s/^/  | /" || die "PUSH"
 
   fi
 
@@ -185,8 +187,8 @@ function sync {
   # Order of includes/excludes/filters is EXTREMELY important
   echo
   echo "# Saving after-sync state and cleaning up"
-  rsync -av --list-only --exclude "/$DOT_DIR" $USER_RULES . | grep "^-\|^d" \
-      | sed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | sed "s:^/\.::" | sort > "$TMP_DIR/tree-after"
+  /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR" $USER_RULES . | grep "^-\|^d" \
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort > "$TMP_DIR/tree-after"
 
 
   # Save all newly created files for next run (to prevent deletion of them)
@@ -194,7 +196,7 @@ function sync {
   comm -23 "$TMP_DIR/tree-after" "$STATE_DIR/tree-current" >"$STATE_DIR/added-prev"
 
   # Save new tree state for next run
-  cat "$STATE_DIR/tree-current" "$STATE_DIR/added-prev" >"$STATE_DIR/tree-prev"
+  gcat "$STATE_DIR/tree-current" "$STATE_DIR/added-prev" >"$STATE_DIR/tree-prev"
 
   # Fire off slow sync stop notifier in background
   on_slow_sync_stop
@@ -220,24 +222,24 @@ function pack {
     # If pack directory is missing, create it and prepare git repo
     if [ ! -d "$DOT_DIR/pack" ]
     then
-        mkdir    $DOT_DIR/pack
+        gmkdir    $DOT_DIR/pack
         git init $DOT_DIR/pack
-        touch    $DOT_DIR/pack/.git-init-marker
+        gtouch    $DOT_DIR/pack/.git-init-marker
         (cd $DOT_DIR/pack && git add .)
         (cd $DOT_DIR/pack && git commit -a -q -m "INIT")
     fi
 
     # If any backups exist, pack them into the repo
-    if [ -d "$DOT_DIR/backups" ] && [ "$(ls -A $DOT_DIR/backups)" ]
+    if [ -d "$DOT_DIR/backups" ] && [ "$(gls -A $DOT_DIR/backups)" ]
     then
         for DIR in $DOT_DIR/backups/*
         do
-            TSTAMP=$(echo $DIR | sed "s|.*/||")
-            if [ "$(ls -A $DIR)" ]
+            TSTAMP=$(echo $DIR | gsed "s|.*/||")
+            if [ "$(gls -A $DIR)" ]
             then
                 echo -n "Processing: $TSTAMP ... "
                 echo -n "Moving ... "
-                (cp -rfl $DIR/* $DOT_DIR/pack && rm -rf $DIR)        || die MV
+                (gcp -rfl $DIR/* $DOT_DIR/pack && grm -rf $DIR)        || die MV
                 echo -n "Adding ... "
                 (cd $DOT_DIR/pack && git add .)                      || die ADD
                 echo -n "Committing ... "
@@ -248,7 +250,7 @@ function pack {
                 echo "Done."
             else
                 echo "Removing empty dir $DIR  ..."
-                rmdir $DIR
+                grmdir $DIR
             fi
         done
         echo "Running 'git gc' on pack dir"
@@ -264,8 +266,8 @@ function pack {
 
 function on_slow_sync_start {
   if [ -n "$SLOW_SYNC_START_CMD" ]; then
-    rm -rf "$SLOW_SYNC_FILE"
-    (sleep $SLOW_SYNC_TIME && touch "$SLOW_SYNC_FILE" && eval "$SLOW_SYNC_START_CMD" ; wait) &
+    grm -rf "$SLOW_SYNC_FILE"
+    (sleep $SLOW_SYNC_TIME && gtouch "$SLOW_SYNC_FILE" && eval "$SLOW_SYNC_START_CMD" ; wait) &
     disown
     shell_pid=$!
   fi
@@ -273,7 +275,7 @@ function on_slow_sync_start {
 
 function on_slow_sync_stop {
   if [ -n "$shell_pid" ]; then
-    kill $shell_pid &>/dev/null
+    gkill $shell_pid &>/dev/null
 
     if [[ -n "$SLOW_SYNC_STOP_CMD" && -f "$SLOW_SYNC_FILE" ]]; then
       (eval "$SLOW_SYNC_STOP_CMD") &
@@ -293,17 +295,17 @@ function timestamp {
 }
 
 function acquire_lock {
-  if ! mkdir "$LOCK_DIR" 2>/dev/null ; then
-    kill -0 $(cat "$LOCK_DIR/pid") &>/dev/null
+  if ! gmkdir "$LOCK_DIR" 2>/dev/null ; then
+    gkill -0 $(gcat "$LOCK_DIR/pid") &>/dev/null
 
     if [[ $? == 0 ]]; then
       echo "There's already an instance of BitPocket syncing this directory. Exiting."
       exit 1
     else
       echo -e "\x1b\x5b1;31mbitpocket error:\x1b\x5b0m Bitpocket found a stale lock directory:"
-      echo "  | Root dir: $(pwd)"
+      echo "  | Root dir: $(gpwd)"
       echo "  | Lock dir: $LOCK_DIR"
-      echo "  | Command:  LOCK_PATH=$(pwd)/$LOCK_DIR && rm \$LOCK_PATH/pid && rmdir \$LOCK_PATH"
+      echo "  | Command:  LOCK_PATH=$(gpwd)/$LOCK_DIR && grm \$LOCK_PATH/pid && grmdir \$LOCK_PATH"
       echo "Please remove the lock directory and try again."
       exit 2
     fi
@@ -313,7 +315,7 @@ function acquire_lock {
 }
 
 function release_lock {
-  rm "$LOCK_DIR/pid" &>/dev/null && rmdir "$LOCK_DIR" &>/dev/null
+  grm "$LOCK_DIR/pid" &>/dev/null && grmdir "$LOCK_DIR" &>/dev/null
 }
 
 function acquire_remote_lock {
@@ -335,8 +337,8 @@ function assert_dotdir {
     echo "fatal: Not a bitpocket directory. Try 'bitpocket help' for usage."
     exit 128
   fi
-  mkdir -p "$TMP_DIR"
-  mkdir -p "$STATE_DIR"
+  gmkdir -p "$TMP_DIR"
+  gmkdir -p "$STATE_DIR"
 }
 
 function cleanup {
@@ -347,7 +349,7 @@ function cleanup {
 function bring_the_children_let_me_kill_them {
   if [ -n "$shell_pid" ]; then
     pkill -P $shell_pid &>/dev/null
-    kill $shell_pid &>/dev/null
+    gkill $shell_pid &>/dev/null
   fi
 }
 
@@ -362,8 +364,8 @@ function die {
 # List all files in the sync set
 function list {
   echo -e "\x1b\x5b1;32mbitpocket\x1b\x5b0m will sync the following files:"
-  rsync -av --list-only --exclude "/$DOT_DIR"  $USER_RULES . | grep "^-\|^d" \
-      | sed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | sed "s:^/\.::" | sort
+  /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR"  $USER_RULES . | grep "^-\|^d" \
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort
 }
 
 function usage {
