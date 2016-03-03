@@ -257,4 +257,4 @@ You can show tray icon during long sync with
 
 * Marcin Kulik | @sickill | https://github.com/sickill | http://ku1ik.com/
 * torfason | https://github.com/torfason
-* Faster IT GmbH | https://www.faster-it.com | https://git.faster-it.com
+* Faster IT GmbH | https://git.faster-it.com | https://www.faster-it.com
