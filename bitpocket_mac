@@ -139,7 +139,7 @@ function sync {
   echo "# Saving current state and backing up files (if needed)"
   echo "  | Root dir: $(gpwd)"
   /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR" $RSYNC_OPTS $USER_RULES . | grep "^-\|^d" \
-      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort > "$STATE_DIR/tree-current"
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.$::" | gsort > "$STATE_DIR/tree-current"
 
   # Prevent bringing back locally deleted files or removing new local files
   gcp -f "$STATE_DIR/added-prev" "$TMP_DIR/fetch-exclude"
@@ -188,7 +188,7 @@ function sync {
   echo
   echo "# Saving after-sync state and cleaning up"
   /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR" $USER_RULES . | grep "^-\|^d" \
-      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort > "$TMP_DIR/tree-after"
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.$::" | gsort > "$TMP_DIR/tree-after"
 
 
   # Save all newly created files for next run (to prevent deletion of them)
@@ -365,7 +365,7 @@ function die {
 function list {
   echo -e "\x1b\x5b1;32mbitpocket\x1b\x5b0m will sync the following files:"
   /usr/local/bin/rsync -av --list-only --exclude "/$DOT_DIR"  $USER_RULES . | grep "^-\|^d" \
-      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.::" | gsort
+      | gsed "s:^\S*\s*\S*\s*\S*\s*\S*\s*:/:" | gsed "s:^/\.$::" | gsort
 }
 
 function usage {
